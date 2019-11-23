@@ -8,6 +8,8 @@ import treeData from './tree.json';
 
 const width = 1500;
 const height = 1000;
+const heatmapHeight = 100;
+const heatmapWidth = 100;
 
 export const MyD3Component = () => {
   /* The useRef Hook creates a variable that "holds on" to a value across rendering
@@ -17,45 +19,34 @@ export const MyD3Component = () => {
 
   /* The useEffect Hook is for running side effects outside of React,
        for instance inserting elements into the DOM using D3 */
-  const createHeatmap = (svg, d) => {
-    let width = 100;
-    let height = 100;
+  const createHeatmap = d => {
+    // addding ids here is a hack to make the selector for all nodes easier
+    let width = heatmapWidth;
+    let height = heatmapHeight;
     width = width;
     height = height;
+    let svg = d3.create('svg:defs');
+    ///let svg = d;
 
     // Labels of row and columns
-    const data = [
-      [2, 3, 2, 3, 2, 3, 4],
-      [2, 3, 2, 3, 2, 3, 4],
-      [5, 6, 5, 6, 5, 6, 6],
-      [0, 0, 0, 0, 0, 0, 0],
-      [2, 3, 2, 3, 2, 3, 4],
-      [5, 6, 5, 6, 5, 6, 6],
-      [0, 8, 1, 0, 0, 0, 0],
-    ];
+    const data = d.data.board;
+    let _data = d.data.board;
 
     var myGroups = [...Array(data[0].length).keys()];
     var myVars = [...Array(data.length).keys()];
 
     // Build X scales and axis:
+
+    svg = svg
+      .append('g')
+      .attr('transform', `translate(-${width}, -${height / 2})`);
+
+    /*
     var x = d3
       .scaleBand()
       .range([0, width])
       .domain(myGroups)
       .padding(0.01);
-
-    svg = svg
-      .append('g')
-      .attr('transform', `translate(-${width + 10}, -${height})`);
-
-    svg
-      .append('text')
-      .attr('dy', '0.31em')
-      .text(d => {
-        console.log(d);
-        return Object.keys(d.data);
-      });
-
     svg.append('g').call(d3.axisBottom(x));
 
     // Build X scales and axis:
@@ -66,11 +57,12 @@ export const MyD3Component = () => {
       .padding(0.01);
 
     svg.append('g').call(d3.axisLeft(y));
+    */
 
+    const colorSet = d3.schemeTableau10;
     //Read the data
     const tileWidth = width / data.length;
     const tileHeight = height / data[0].length;
-    console.log(d3.schemeCategory10);
     data.map((l, j) => {
       l.map((el, i) => {
         svg
@@ -80,40 +72,52 @@ export const MyD3Component = () => {
           .attr('height', tileHeight)
           .attr('width', tileWidth)
           .style('fill', function() {
-            return el == 0
-              ? 'white'
-              : el < 10
-              ? d3.schemeCategory10[el]
-              : d3.schemePaired[el];
+            const ret =
+              el == 0
+                ? 'black'
+                : el < colorSet.length
+                ? colorSet[el]
+                : d3.schemeSet1[el - colorSet.length];
+            return ret;
           });
       });
     });
+    return svg.node();
   };
   useEffect(
     () => {
       if (d3Container.current) {
+        const dy = 120;
+        const dx = 236;
+        const margin = {
+          top: heatmapHeight / 2,
+          right: 120,
+          bottom: heatmapHeight / 2,
+          left: 40,
+        };
+
         const svg = d3.select(d3Container.current);
 
-        const margin = { top: 10, right: 120, bottom: 10, left: 40 };
-        const dy = 206;
-        const dx = 100;
-
+        const root = d3.hierarchy(treeData);
         const tree = d3.tree();
-        tree.size([width, height]);
-        tree.nodeSize([dx, dy]);
+        const descendants = root.descendants();
+        console.log(root);
+
+        tree.size([dy * descendants.length + 400, dx * descendants.length]);
+        tree.nodeSize([dy, dx]);
         const diagonal = d3
           .linkHorizontal()
           .x(d => d.y)
           .y(d => d.x);
-        const root = d3.hierarchy(treeData, el => Object.values(el));
-        console.log(root.descendants());
 
         root.x0 = dy / 2;
         root.y0 = 0;
-        root.descendants().forEach((d, i) => {
+        descendants.forEach((d, i) => {
           d.id = i;
           d._children = d.children;
-          if (d.depth) d.children = null;
+
+          // hides children
+          //if (d.depth) d.children = null;
         });
 
         svg.style('font', '13px sans-serif');
@@ -157,12 +161,15 @@ export const MyD3Component = () => {
             );
 
           // Update the nodes…
-          const node = gNode.selectAll('g').data(nodes, d => d.id);
+          const node = gNode.selectAll('g.selectorClass').data(nodes, d => {
+            return d.id;
+          });
 
           // Enter any new nodes at the parent's previous position.
           const nodeEnter = node
             .enter()
             .append('g')
+            .attr('class', 'selectorClass')
             .attr('transform', d => `translate(${source.y0},${source.x0})`)
             .attr('fill-opacity', 0)
             .attr('stroke-opacity', 0)
@@ -171,20 +178,23 @@ export const MyD3Component = () => {
               update(d);
             });
 
-          nodeEnter
-            .append('circle')
-            .attr('r', 2.5)
-            .attr('fill', d => (d._children ? '#555' : '#999'))
-            .attr('stroke-width', 10);
+          nodeEnter.append(d => createHeatmap(d));
 
-          createHeatmap(nodeEnter);
-
+          const TEXT_WIDTH = 10;
+          const NODE_OFFSET = 50;
           nodeEnter
             .append('text')
             .attr('dy', '0.31em')
-            .attr('x', d => (d._children ? -6 : 6))
+            .attr('x', d =>
+              d._children
+                ? -heatmapWidth - TEXT_WIDTH
+                : -heatmapWidth - TEXT_WIDTH - NODE_OFFSET
+            )
+            .attr('y', -10)
             .attr('text-anchor', d => (d._children ? 'end' : 'start'))
-            .text(d => Object.keys(d.data))
+            .text(d => `Score: ${d.data.score}`)
+            .attr('text-decoration', d => (d._children ? 'underline' : ''))
+            .attr('text-decoration', d => (d._children ? 'underline' : ''))
             .clone(true)
             .lower()
             .attr('stroke-linejoin', 'round')
