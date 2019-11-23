@@ -6,7 +6,6 @@ import { data } from './data';
 import kv from './kv.json';
 import treeData from './tree.json';
 
-const width = 1500;
 const height = 1000;
 const heatmapHeight = 100;
 const heatmapWidth = 100;
@@ -89,21 +88,34 @@ export const MyD3Component = () => {
       if (d3Container.current) {
         const dy = 120;
         const dx = 236;
-        const margin = {
-          top: heatmapHeight / 2,
-          right: 120,
-          bottom: heatmapHeight / 2,
-          left: 40,
-        };
+        const margin = { top: 100, right: 120, bottom: 10, left: 40 };
+        //const margin = {
+        //  top: heatmapHeight / 2,
+        //  right: heatmapWidth * 2,
+        //  bottom: heatmapHeight / 2,
+        //  left: 40,
+        //};
 
         const svg = d3.select(d3Container.current);
-
+        const HEATMAP_OFFSET = 150;
         const root = d3.hierarchy(treeData);
         const tree = d3.tree();
         const descendants = root.descendants();
+        const ORIENTATIONS = 2;
+        let width =
+          ((heatmapWidth + HEATMAP_OFFSET) * root.data.tiles.length) /
+          ORIENTATIONS;
+
+        svg.attr('viewBox', [
+          -margin.left,
+          -margin.top,
+          (heatmapWidth + 100) * descendants.length,
+          dx,
+        ]);
+
         console.log(root);
 
-        tree.size([dy * descendants.length + 400, dx * descendants.length]);
+        //tree.size([width, height]);
         tree.nodeSize([dy, dx]);
         const diagonal = d3
           .linkHorizontal()
@@ -151,10 +163,11 @@ export const MyD3Component = () => {
 
           const height = right.x - left.x + margin.top + margin.bottom;
 
+          //.attr('viewBox', [ 0, left.x - margin.top, width + heatmapWidth, height, ])
           const transition = svg
             .transition()
-            .duration(duration)
             .attr('viewBox', [-margin.left, left.x - margin.top, width, height])
+            .duration(duration)
             .tween(
               'resize',
               window.ResizeObserver ? null : () => () => svg.dispatch('toggle')
@@ -270,9 +283,9 @@ export const MyD3Component = () => {
 
   return (
     <svg
+      width={1000}
+      height={2000}
       className="d3-component"
-      width={width}
-      height={height + 1000}
       ref={d3Container}
     />
   );
