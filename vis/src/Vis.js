@@ -82,6 +82,9 @@ export const D3Visualization = props => {
   useEffect(
     () => {
       if (d3Container.current) {
+        d3.select('svg')
+          .selectAll('*')
+          .remove();
         const dy = 120;
         const dx = 236;
         const margin = { top: 100, right: 120, bottom: 10, left: 40 };
@@ -268,8 +271,6 @@ export const D3Visualization = props => {
           });
         }
         update(root);
-
-        return svg.node();
       }
     },
 
@@ -280,7 +281,7 @@ export const D3Visualization = props => {
             if the variables are valid, but we do not have to compare old props
             to next props to decide whether to rerender.
         */
-    [d3Container.current, props]
+    [props]
   );
 
   return (
