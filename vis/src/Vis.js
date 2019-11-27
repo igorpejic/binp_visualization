@@ -1,16 +1,12 @@
 import React, { useRef, useEffect } from 'react';
 import * as d3 from 'd3';
-import ReactDOM from 'react-dom';
 import { hierarchy } from 'd3-hierarchy';
-import { data } from './data';
-import kv from './kv.json';
-import treeData from './tree.json';
 
 const height = 1000;
 const heatmapHeight = 100;
 const heatmapWidth = 100;
 
-export const MyD3Component = () => {
+export const D3Visualization = props => {
   /* The useRef Hook creates a variable that "holds on" to a value across rendering
        passes. In this case it will hold our component's SVG DOM element. It's
        initialized null and React will assign it later (see the return statement) */
@@ -98,7 +94,15 @@ export const MyD3Component = () => {
 
         const svg = d3.select(d3Container.current);
         const HEATMAP_OFFSET = 150;
+        console.log(props.resultToDisplay, 'ccc');
+        const treeData =
+          props.resultToDisplay && props.resultToDisplay.result_tree
+            ? JSON.parse(props.resultToDisplay.result_tree)
+            : {};
         const root = d3.hierarchy(treeData);
+        if (!(root && root.data && root.data.tiles)) {
+          return;
+        }
         const tree = d3.tree();
         const descendants = root.descendants();
         const ORIENTATIONS = 2;
@@ -112,8 +116,6 @@ export const MyD3Component = () => {
           (heatmapWidth + 100) * descendants.length,
           dx,
         ]);
-
-        console.log(root);
 
         //tree.size([width, height]);
         tree.nodeSize([dy, dx]);
@@ -278,7 +280,7 @@ export const MyD3Component = () => {
             if the variables are valid, but we do not have to compare old props
             to next props to decide whether to rerender.
         */
-    [d3Container.current]
+    [d3Container.current, props]
   );
 
   return (
