@@ -82,11 +82,19 @@ export const D3Visualization = props => {
   useEffect(
     () => {
       if (d3Container.current) {
+        const treeData =
+          props.resultToDisplay && props.resultToDisplay.result_tree
+            ? JSON.parse(props.resultToDisplay.result_tree)
+            : {};
+        const root = d3.hierarchy(treeData);
+        if (!(root && root.data && root.data.tiles)) {
+          return;
+        }
         d3.select('svg')
           .selectAll('*')
           .remove();
         const dy = 120;
-        const dx = 236;
+        const dx = root.data.board[0].length * 15;
         const margin = { top: 100, right: 120, bottom: 10, left: 40 };
         //const margin = {
         //  top: heatmapHeight / 2,
@@ -97,15 +105,6 @@ export const D3Visualization = props => {
 
         const svg = d3.select(d3Container.current);
         const HEATMAP_OFFSET = 150;
-        console.log(props.resultToDisplay, 'ccc');
-        const treeData =
-          props.resultToDisplay && props.resultToDisplay.result_tree
-            ? JSON.parse(props.resultToDisplay.result_tree)
-            : {};
-        const root = d3.hierarchy(treeData);
-        if (!(root && root.data && root.data.tiles)) {
-          return;
-        }
         const tree = d3.tree();
         const descendants = root.descendants();
         const ORIENTATIONS = 2;
@@ -286,7 +285,7 @@ export const D3Visualization = props => {
 
   return (
     <svg
-      width={1000}
+      width={2000}
       height={2000}
       className="d3-component"
       ref={d3Container}
