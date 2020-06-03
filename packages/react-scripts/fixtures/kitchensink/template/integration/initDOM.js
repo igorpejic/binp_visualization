@@ -47,18 +47,22 @@ export default feature =>
       let window;
 
       if (process.env.E2E_FILE) {
-        window = (await JSDOM.fromFile(file, {
-          pretendToBeVisual: true,
-          resources: fileResourceLoader,
-          runScripts: 'dangerously',
-          url,
-        })).window;
+        window = (
+          await JSDOM.fromFile(file, {
+            pretendToBeVisual: true,
+            resources: fileResourceLoader,
+            runScripts: 'dangerously',
+            url,
+          })
+        ).window;
       } else {
-        window = (await JSDOM.fromURL(url, {
-          pretendToBeVisual: true,
-          resources: 'usable',
-          runScripts: 'dangerously',
-        })).window;
+        window = (
+          await JSDOM.fromURL(url, {
+            pretendToBeVisual: true,
+            resources: 'usable',
+            runScripts: 'dangerously',
+          })
+        ).window;
       }
 
       const { document } = window;

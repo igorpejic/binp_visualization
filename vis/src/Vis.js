@@ -63,7 +63,7 @@ export const D3Visualization = props => {
         svg
           .append('rect')
           .attr('x', i * tileWidth)
-          .attr('y', j * tileHeight)
+          .attr('y', height - j * tileHeight)
           .attr('height', tileHeight)
           .attr('width', tileWidth)
           .style('fill', function() {
@@ -72,7 +72,9 @@ export const D3Visualization = props => {
                 ? 'black'
                 : el < colorSet.length
                 ? colorSet[el]
-                : d3.schemeSet1[el - colorSet.length];
+                : d3.schemeDark2[
+                    d3.schemeDark2.length - (el % d3.schemeDark2.length) - 1
+                  ];
             return ret;
           });
       });
@@ -95,7 +97,7 @@ export const D3Visualization = props => {
           .remove();
         const dy = 120;
         const dx = root.data.board[0].length * 15;
-        const margin = { top: 100, right: 120, bottom: 10, left: 40 };
+        const margin = { top: 100, right: 120, bottom: 100, left: 40 };
         //const margin = {
         //  top: heatmapHeight / 2,
         //  right: heatmapWidth * 2,
@@ -197,20 +199,21 @@ export const D3Visualization = props => {
 
           nodeEnter.append(d => createHeatmap(d));
 
-          const TEXT_WIDTH = 10;
+          const TEXT_WIDTH = -180;
           const NODE_OFFSET = 50;
           nodeEnter
             .append('text')
             .attr('dy', '0.31em')
             .attr('x', d =>
               d._children
-                ? -heatmapWidth - TEXT_WIDTH
+                ? -heatmapWidth - TEXT_WIDTH - NODE_OFFSET
                 : -heatmapWidth - TEXT_WIDTH - NODE_OFFSET
             )
             .attr('y', -10)
-            .attr('text-anchor', d => (d._children ? 'end' : 'start'))
-            .text(d => `Score: ${d.data.score}`)
-            .attr('text-decoration', d => (d._children ? 'underline' : ''))
+            //.attr('text-anchor', d => (d._children ? 'end' : 'start'))
+            .attr('text-anchor', d => 'start')
+          .text(d => d.data.score != 0 ? `avgDepth: ${d.data.score.toFixed(2)}` : '')
+            .style("font-size", "25px")
             .attr('text-decoration', d => (d._children ? 'underline' : ''))
             .clone(true)
             .lower()
@@ -285,7 +288,7 @@ export const D3Visualization = props => {
 
   return (
     <svg
-      width={2000}
+      width={4000}
       height={2000}
       className="d3-component"
       ref={d3Container}
